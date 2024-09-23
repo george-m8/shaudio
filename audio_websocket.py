@@ -1,46 +1,49 @@
-# audio_websocket.py
-# This bitch aint workin'
-
 import asyncio
 import websockets
 import json
 
-debug = True
+connected_clients = set()  # To keep track of all connected clients
 
-# This bitch aint workin'
+# Function to broadcast the audio data to all connected clients
+async def broadcast(low, mid, high):
+    if connected_clients:  # Check if there are clients connected
+        print(f"Broadcasting to {len(connected_clients)} clients")  # Debug: number of connected clients
+        data = {
+            "low": float(low),  # Convert to float
+            "mid": float(mid),  # Convert to float
+            "high": float(high)  # Convert to float
+        }
+        message = json.dumps(data)  # Convert to JSON string
 
-# Function to send audio data over WebSocket
-async def send_audio_data(websocket, low_band, mid_band, high_band):
-    # Convert NumPy float32 to Python float
-    data = {
-        "low": float(low_band),  # Convert to float
-        "mid": float(mid_band),  # Convert to float
-        "high": float(high_band)  # Convert to float
-    }
-    await websocket.send(json.dumps(data))  # Send data as a JSON object
+        print(f"Broadcasting message: {message}")  # Debug: show the message being broadcasted
 
-# Function to run the WebSocket server
-async def audio_server(websocket, path):
-    if (debug): print("Client connected")
+        # Create tasks for each coroutine and run them explicitly
+        tasks = [asyncio.create_task(client.send(message)) for client in connected_clients]
+        try:
+            await asyncio.gather(*tasks)  # Await the completion of all tasks
+            print("Broadcast successful")  # Debug: successful broadcast
+        except Exception as e:
+            print(f"Error during broadcast: {e}")  # Debug: any errors during broadcasting
+    else:
+        print("No clients connected. Skipping broadcast.")  # Debug: no clients connected
+
+# WebSocket handler
+async def websocket_handler(websocket, path):
+    # Register client
+    print("New client connected")  # Debug: new client connection
+    connected_clients.add(websocket)
     try:
-        while True:
-            await asyncio.sleep(1)  # Keep connection alive
-    except websockets.ConnectionClosed:
-        print("Client disconnected")
+        async for _ in websocket:  # Just keep the connection alive
+            pass
+    except Exception as e:
+        print(f"Error with client connection: {e}")  # Debug: any errors with the connection
+    finally:
+        # Unregister client
+        connected_clients.remove(websocket)
+        print("Client disconnected")  # Debug: client disconnect
 
-# Function to start the server
-def start_server():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    server = websockets.serve(audio_server, "localhost", 6789)  # Set WebSocket to localhost:6789
-    print("WebSocket server started at ws://localhost:6789")
-    loop.run_until_complete(server)
-    loop.run_forever()
-
-# Function to send data to all connected clients
-async def broadcast(low_band=50, mid_band=50, high_band=50):
-    if (debug): print(f"BROADCASTING: Low: {low_band}, Mid: {mid_band}, High: {high_band}")
-    uri = "ws://localhost:6789"
-    async with websockets.connect(uri) as websocket:
-        await send_audio_data(websocket, low_band, mid_band, high_band)
-        if (debug): print("Data sent to WebSocket server")
+# Function to start the WebSocket server
+async def start_websocket_server():
+    async with websockets.serve(websocket_handler, "localhost", 6789):
+        print("WebSocket server started on ws://localhost:6789")  # Debug: server started
+        await asyncio.Future()  # Run the server forever

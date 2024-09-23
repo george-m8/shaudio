@@ -1,7 +1,7 @@
 # audio_processing.py
 import numpy as np
 
-debug = True
+debug = False
 
 # Function to process the audio data
 def process_audio(audio_data):
@@ -18,6 +18,6 @@ def process_audio(audio_data):
     high_band = fft_magnitude[201:].mean()   # 201Hz+
 
     # Print the values or send them somewhere in your project
-    if (debug): print(f"RMS: {rms}, Low: {low_band}, Mid: {mid_band}, High: {high_band}")
+    if (debug): print(f"audio_processing: RMS: {rms}, Low: {low_band}, Mid: {mid_band}, High: {high_band}")
 
     return rms, low_band, mid_band, high_band

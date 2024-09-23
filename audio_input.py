@@ -26,9 +26,10 @@ def audio_callback(indata, frames, time, status):
     # Send audio data to the processor for analysis
     rms, low_band, mid_band, high_band = process_audio(audio_data)
 
-    if (debug): print (f"RMS: {rms}, Low: {low_band}, Mid: {mid_band}, High: {high_band}")
+    if (debug): print (f"audio_input: RMS: {rms}, Low: {low_band}, Mid: {mid_band}, High: {high_band}")
 
-    asyncio.run(broadcast(low_band, mid_band, high_band))
+    # Use the global event loop to broadcast the audio bands asynchronously
+    asyncio.run_coroutine_threadsafe(broadcast(low_band, mid_band, high_band), loop)
 
 def start_audio_stream():
     # Start the audio input stream

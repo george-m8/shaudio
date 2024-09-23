@@ -27,4 +27,5 @@ Audio to visual project for Shaun.
 - Install portaudio (think theres a brew)
 - Create venv
 - Install requirements.txt (some in here atm that aren't required so feel free to install what you need)
+- run main.py
 - Go to localhost:8000 to see an eq based off of your mic.
